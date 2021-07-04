@@ -17,11 +17,25 @@ app.use(express.static(path.join(__dirname, '../public')));
 
 // Run when client connects
 io.on('connection', socket => {
+  let currentUsername = '';
+  
   console.log('New WS Connection...');
-  socket.on('connected', () => {
-    console.log('A user has connected');
-  })
-})
+  socket.on('connected', (username) => {
+    currentUsername = username
+    const message = `${currentUsername} has just connected`;
+    // io.emit('messages', { username: 'Server', message })
+    socket.broadcast.emit('messages', { username: 'Server', message })
+  });
+
+  socket.on('message', (username, message) => {
+    io.emit('messages', { username, message })
+  });
+
+  socket.on('disconnect', () => {
+    const message = `${currentUsername} has left the room`;
+    io.emit('messages', { username: 'Server', message });
+  });
+});
 
 const PORT = 4000  || process.env.PORT;
 
